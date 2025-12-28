@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hygge Study | 北欧風学習支援システム</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;700&family=Noto+Sans+JP:wght@300;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --nord-bg: #fdfcfb;     /* 柔らかなオフホワイト */
+            --nord-frost: #88c0d0;  /* スモーキーブルー */
+            --nord-leaf: #a3be8c;   /* セージグリーン */
+            --nord-text: #4c566a;   /* 温かいグレー */
+        }
+        body {
+            font-family: 'Montserrat', 'Noto Sans JP', sans-serif;
+            background-color: var(--nord-bg);
+            color: var(--nord-text);
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <nav class="p-6 flex justify-between items-center max-w-6xl mx-auto">
+        <h1 class="text-2xl font-light tracking-widest uppercase">Hygge Study</h1>
+        <button id="login-btn" class="bg-[#88c0d0] text-white px-6 py-2 rounded-full hover:bg-opacity-80 transition duration-300 font-medium text-sm">
+            LOGIN WITH GITHUB
+        </button>
+    </nav>
+
+    <main class="max-w-6xl mx-auto px-6 py-12">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            
+            <div class="space-y-8">
+                <div class="glass-card p-8 rounded-3xl shadow-sm">
+                    <h2 class="text-sm font-bold uppercase tracking-tighter mb-4 opacity-60">Today's Progress</h2>
+                    <div class="text-4xl font-light">02:45<span class="text-lg ml-2">hrs</span></div>
+                    <div class="mt-4 w-full bg-gray-200 h-1 rounded-full overflow-hidden">
+                        <div class="bg-[#a3be8c] h-full w-2/3"></div>
+                    </div>
+                </div>
+
+                <div class="glass-card p-8 rounded-3xl shadow-sm">
+                    <h2 class="text-sm font-bold uppercase tracking-tighter mb-4 opacity-60">Exam Countdown</h2>
+                    <div class="text-3xl font-light">124<span class="text-lg ml-2 font-normal">Days Left</span></div>
+                </div>
+            </div>
+
+            <div class="md:col-span-2">
+                <div class="glass-card p-8 rounded-3xl shadow-sm min-h-[400px]">
+                    <div class="flex justify-between items-center mb-8">
+                        <h2 class="text-xl font-medium italic">Study Plan</h2>
+                        <button class="text-[#88c0d0] hover:underline text-sm font-medium">+ NEW TASK</button>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div class="flex items-center p-4 bg-white/50 rounded-2xl border border-gray-100">
+                            <div class="w-3 h-3 rounded-full bg-[#a3be8c] mr-4"></div>
+                            <span class="flex-1 text-sm">数学：チャート式 1-10ページ</span>
+                            <span class="text-xs opacity-50 italic">Priority: High</span>
+                        </div>
+                        <div class="flex items-center p-4 bg-white/50 rounded-2xl border border-gray-100">
+                            <div class="w-3 h-3 rounded-full bg-gray-300 mr-4"></div>
+                            <span class="flex-1 text-sm">英語：英単語ターゲット1900</span>
+                            <span class="text-xs opacity-50 italic">Priority: Mid</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="text-center py-12 opacity-40 text-xs tracking-widest">
+        &copy; 2024 HYGGE STUDY SYSTEM. POWERED BY GITHUB API.
+    </footer>
+
+    <script>
+        // ここにGitHub APIとの連携ロジックを書いていきます
+        const loginBtn = document.getElementById('login-btn');
+        loginBtn.addEventListener('click', () => {
+            console.log("Authentication logic will be implemented here.");
+            // 次のステップでOAuthの処理を追記します
+        });
+    </script>
+</body>
+</html>
