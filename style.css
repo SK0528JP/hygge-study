@@ -1,0 +1,69 @@
+:root {
+    --nord-bg: #fdfcfb;
+    --nord-frost: #88c0d0;
+    --nord-leaf: #a3be8c;
+    --nord-text: #4c566a;
+}
+
+body {
+    font-family: 'Montserrat', 'Noto Sans JP', sans-serif;
+    background-color: var(--nord-bg);
+    color: var(--nord-text);
+}
+
+/* ガラスのような質感のカード */
+.glass-card {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    transition: transform 0.3s ease;
+}
+
+.glass-card:hover {
+    transform: translateY(-2px);
+}
+
+/* 小さなラベル */
+.label-tiny {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    opacity: 0.6;
+    margin-bottom: 1rem;
+}
+
+/* ボタン */
+.btn-primary {
+    background-color: var(--nord-frost);
+    color: white;
+    padding: 0.5rem 1.5rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    opacity: 0.8;
+    box-shadow: 0 4px 12px rgba(136, 192, 208, 0.3);
+}
+
+/* プログレスバー */
+.progress-bar-container {
+    width: 100%;
+    background-color: #e5e9f0;
+    height: 4px;
+    border-radius: 9999px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    background-color: var(--nord-leaf);
+    height: 100%;
+    transition: width 0.5s ease-out;
+}
+
+.text-accent {
+    color: var(--nord-frost);
+}
