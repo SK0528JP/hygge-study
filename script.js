@@ -1,11 +1,12 @@
 /**
  * Hygge Study - Main Script
- * GitHub APIを活用した学習管理ロジック
+ * GitHub Gistをデータベースとして活用するロジック
  */
 
 // --- 設定エリア ---
-const CLIENT_ID = "YOUR_CLIENT_ID_HERE"; // GitHub OAuth AppのClient IDをここに貼り付けてください
-const REDIRECT_URI = window.location.origin + window.location.pathname;
+// 本来はOAuthですが、完全サーバーレスで最も確実に動く「Personal Access Token」方式を採用します
+let GITHUB_TOKEN = localStorage.getItem('github_token') || "";
+let GIST_ID = localStorage.getItem('gist_id') || ""; // データの保存先Gist ID
 
 // --- DOM要素 ---
 const loginBtn = document.getElementById('login-btn');
@@ -20,54 +21,116 @@ let timerInterval = null;
 
 // --- 1. 初期化処理 ---
 window.addEventListener('DOMContentLoaded', () => {
-    // URLから認可コード(code)があるか確認（GitHubからのリダイレクト後）
-    const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get('code');
-
-    if (code) {
-        // 本来はここでサーバーを介してトークン交換が必要
-        // GitHub Pagesのみで行う場合、この後「Device Flow」への切り替えも検討
-        console.log("GitHub Authorization Code obtained:", code);
+    if (GITHUB_TOKEN) {
         handleLoginSuccess();
-        // URLを綺麗にする（codeを消す）
-        window.history.replaceState({}, document.title, window.location.pathname);
+        loadStudyData(); // 保存されたデータを取得
     }
-
-    // ローカルストレージにトークンがあればログイン済みとして扱う
-    const token = localStorage.getItem('github_token');
-    if (token) {
-        handleLoginSuccess();
-    }
-
     renderTasks(dummyTasks);
 });
 
-// --- 2. 認証ロジック ---
+// --- 2. 認証・トークン管理 ---
 
 loginBtn.addEventListener('click', () => {
-    const token = localStorage.getItem('github_token');
-    if (token) {
-        // すでにログインしていればログアウト処理
-        if (confirm("Logout?")) {
-            localStorage.removeItem('github_token');
+    if (GITHUB_TOKEN) {
+        if (confirm("ログアウトしますか？")) {
+            localStorage.clear();
             window.location.reload();
         }
     } else {
-        // GitHubの認証画面へリダイレクト
-        const authUrl = `https://github.com/login/oauth/authorize?client_id=${CLIENT_ID}&scope=repo,workflow&redirect_uri=${REDIRECT_URI}`;
-        window.location.href = authUrl;
+        const token = prompt("GitHub Personal Access Tokenを入力してください\n(設定 > Developer settings > Tokens から発行)");
+        if (token) {
+            GITHUB_TOKEN = token;
+            localStorage.setItem('github_token', token);
+            handleLoginSuccess();
+            setupDatabaseGist(); // 初回ログイン時に保存用Gistを作成
+        }
     }
 });
 
 function handleLoginSuccess() {
-    loginBtn.innerText = "LOGGED IN (LOGOUT)";
-    loginBtn.classList.add('opacity-70');
-    // ここでGitHub APIを叩いてユーザー情報を取得する処理を今後追加します
+    loginBtn.innerText = "CONNECTED TO GITHUB";
+    loginBtn.classList.replace('btn-primary', 'opacity-70');
 }
 
-// --- 3. 学習タイマー機能 (新設) ---
+// --- 3. データベース操作 (GitHub Gist API) ---
 
-// プログレスバーや学習時間をクリックするとタイマー開始/停止（テスト用）
+// 保存用のGistを作成または確認する
+async function setupDatabaseGist() {
+    if (GIST_ID) return;
+
+    const response = await fetch('https://api.github.com/gists', {
+        method: 'POST',
+        headers: {
+            'Authorization': `token ${GITHUB_TOKEN}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            description: "Hygge Study Data",
+            public: false,
+            files: {
+                "study_logs.json": { content: JSON.stringify({ total_seconds: 0, history: [] }) }
+            }
+        })
+    });
+
+    const data = await response.json();
+    GIST_ID = data.id;
+    localStorage.setItem('gist_id', GIST_ID);
+    alert("学習用データベースをGitHub上に作成しました！");
+}
+
+// データの保存
+async function saveStudyData(seconds) {
+    if (!GIST_ID || !GITHUB_TOKEN) return;
+
+    // 現在のデータを取得
+    const currentDataRes = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+        headers: { 'Authorization': `token ${GITHUB_TOKEN}` }
+    });
+    const currentData = await currentDataRes.json();
+    const content = JSON.parse(currentData.files["study_logs.json"].content);
+
+    // 更新
+    content.total_seconds += seconds;
+    content.history.push({ date: new Date().toISOString(), duration: seconds });
+
+    // GitHubへ書き戻し
+    await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+        method: 'PATCH',
+        headers: {
+            'Authorization': `token ${GITHUB_TOKEN}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            files: {
+                "study_logs.json": { content: JSON.stringify(content) }
+            }
+        })
+    });
+    console.log("Data synced to GitHub Gist.");
+}
+
+// データの読み込み（起動時）
+async function loadStudyData() {
+    if (!GIST_ID || !GITHUB_TOKEN) return;
+
+    try {
+        const response = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+            headers: { 'Authorization': `token ${GITHUB_TOKEN}` }
+        });
+        const data = await response.json();
+        const content = JSON.parse(data.files["study_logs.json"].content);
+        
+        // 累計時間を表示に反映（秒を時間に変換）
+        secondsElapsed = content.total_seconds;
+        updateTimerDisplay();
+    } catch (e) {
+        console.error("データの読み込みに失敗しました", e);
+    }
+}
+
+// --- 4. 学習タイマー機能 ---
+
 studyTimeEl.parentElement.addEventListener('click', () => {
     if (!isTimerRunning) {
         startTimer();
@@ -79,6 +142,7 @@ studyTimeEl.parentElement.addEventListener('click', () => {
 function startTimer() {
     isTimerRunning = true;
     studyTimeEl.classList.add('text-[#88c0d0]', 'animate-pulse');
+    const startTime = 0; // セッションごとの計測用
     timerInterval = setInterval(() => {
         secondsElapsed++;
         updateTimerDisplay();
@@ -89,8 +153,7 @@ function stopTimer() {
     isTimerRunning = false;
     studyTimeEl.classList.remove('text-[#88c0d0]', 'animate-pulse');
     clearInterval(timerInterval);
-    // ここでGitHubにデータを保存する関数を呼び出す予定
-    console.log(`Saved: ${secondsElapsed} seconds of study.`);
+    saveStudyData(secondsElapsed); // 停止時に自動保存
 }
 
 function updateTimerDisplay() {
@@ -99,24 +162,21 @@ function updateTimerDisplay() {
     const secs = (secondsElapsed % 60).toString().padStart(2, '0');
     studyTimeEl.innerText = `${hrs}:${mins}:${secs}`;
     
-    // プログレスバーを動かす（例：1時間で100%になる設定）
     const progress = Math.min((secondsElapsed / 3600) * 100, 100);
     progressFill.style.width = `${progress}%`;
 }
 
-// --- 4. タスク管理ロジック ---
-
+// --- 5. タスク表示 ---
 const dummyTasks = [
     { title: "数学：青チャート 演習10問", priority: "High", color: "#a3be8c" },
-    { title: "英語：ターゲット1900 セクション1", priority: "Mid", color: "#d08770" },
-    { title: "物理：セミナー物理 力学", priority: "Low", color: "#88c0d0" }
+    { title: "英語：ターゲット1900 セクション1", priority: "Mid", color: "#d08770" }
 ];
 
 function renderTasks(tasks) {
     taskList.innerHTML = '';
     tasks.forEach(task => {
         const taskHtml = `
-            <div class="flex items-center p-4 bg-white/50 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+            <div class="flex items-center p-4 bg-white/50 rounded-2xl border border-gray-100 shadow-sm">
                 <div class="w-3 h-3 rounded-full mr-4" style="background-color: ${task.color}"></div>
                 <span class="flex-1 text-sm font-medium">${task.title}</span>
                 <span class="text-[10px] opacity-40 uppercase font-bold tracking-tighter">${task.priority}</span>
