@@ -1,76 +1,165 @@
+/**
+ * Hygge Study - Professional CSS
+ * Theme: Nordic Modern (Hygge)
+ */
+
+/* --- カラー・変数定義 --- */
 :root {
-    --nord-bg: #fdfcfb;
-    --nord-frost: #88c0d0;
-    --nord-leaf: #a3be8c;
-    --nord-text: #4c566a;
+    --nord-0: #fdfcfb;     /* 背景: 柔らかなスノーホワイト */
+    --nord-1: #eceff4;     /* サブ背景: 氷のようなグレー */
+    --nord-2: #4c566a;     /* メインテキスト: 落ち着いたチャコール */
+    --nord-frost: #88c0d0;  /* アクセント: スモーキーブルー */
+    --nord-leaf: #a3be8c;   /* 進捗: セージグリーン */
+    --nord-aurora: #d08770; /* 警告/削除: テラコッタ */
+    --shadow-soft: 0 10px 30px -5px rgba(0, 0, 0, 0.05);
 }
 
+/* --- ベーススタイル --- */
 body {
     font-family: 'Montserrat', 'Noto Sans JP', sans-serif;
-    background-color: var(--nord-bg);
-    color: var(--nord-text);
+    background-color: var(--nord-0);
+    color: var(--nord-2);
+    line-height: 1.6;
+    letter-spacing: 0.02em;
 }
 
+/* --- ガラスモフィズム（カードデザイン） --- */
 .glass-card {
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: var(--shadow-soft);
+    transition: all 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
 }
 
 .glass-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.08);
 }
 
+/* --- タイポグラフィ --- */
 .label-tiny {
-    font-size: 0.75rem;
+    font-size: 0.65rem;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.15em;
-    opacity: 0.6;
-    margin-bottom: 1.5rem;
+    letter-spacing: 0.25em;
+    opacity: 0.4;
+    display: block;
 }
 
+/* --- ボタン --- */
 .btn-primary {
-    background-color: var(--nord-frost);
+    background: linear-gradient(135deg, #88c0d0, #81a1c1);
     color: white;
-    padding: 0.6rem 1.8rem;
+    padding: 0.8rem 1.8rem;
     border-radius: 9999px;
     font-size: 0.75rem;
     font-weight: 700;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.15em;
+    box-shadow: 0 4px 15px rgba(129, 161, 193, 0.3);
     transition: all 0.3s ease;
 }
 
 .btn-primary:hover {
-    opacity: 0.8;
-    box-shadow: 0 4px 15px rgba(136, 192, 208, 0.4);
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(129, 161, 193, 0.4);
 }
 
+.btn-add {
+    color: var(--nord-frost);
+    font-size: 0.75rem;
+    font-weight: 700;
+    border: 2px solid var(--nord-frost);
+    padding: 0.5rem 1.2rem;
+    border-radius: 9999px;
+    letter-spacing: 0.1em;
+    transition: 0.3s;
+}
+
+.btn-add:hover {
+    background-color: var(--nord-frost);
+    color: white;
+}
+
+/* --- 入力フィールド --- */
+.input-field {
+    width: 100%;
+    padding: 1.2rem;
+    border-radius: 1.2rem;
+    background: rgba(0, 0, 0, 0.03);
+    border: 1px solid rgba(0, 0, 0, 0.02);
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    outline: none;
+}
+
+.input-field:focus {
+    background: white;
+    border-color: var(--nord-frost);
+    box-shadow: 0 0 0 4px rgba(136, 192, 208, 0.1);
+}
+
+/* --- プログレスバー --- */
 .progress-bar-container {
     width: 100%;
     background-color: #f0f2f5;
-    height: 6px;
+    height: 8px;
     border-radius: 9999px;
     overflow: hidden;
 }
 
 .progress-bar-fill {
-    background-color: var(--nord-leaf);
+    background: linear-gradient(90deg, #a3be8c, #8fbcbb);
     height: 100%;
-    transition: width 1s ease-in-out;
+    border-radius: 9999px;
+    transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.text-accent {
-    color: var(--nord-frost);
+/* --- タスクリスト項目 --- */
+#task-list input[type="checkbox"] {
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #d8dee9;
+    border-radius: 6px;
+    cursor: pointer;
+    position: relative;
+    transition: 0.2s;
 }
 
+#task-list input[type="checkbox"]:checked {
+    background-color: var(--nord-leaf);
+    border-color: var(--nord-leaf);
+}
+
+#task-list input[type="checkbox"]:checked::after {
+    content: '✓';
+    position: absolute;
+    color: white;
+    font-size: 14px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* --- アニメーション --- */
 .animate-pulse-soft {
-    animation: pulse 2s infinite ease-in-out;
+    animation: pulse-soft 2.5s infinite ease-in-out;
 }
 
-@keyframes pulse {
+@keyframes pulse-soft {
     0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.8; transform: scale(1.02); }
+    50% { opacity: 0.7; transform: scale(1.01); }
+}
+
+/* --- レスポンシブ調整 --- */
+@media (max-width: 768px) {
+    .glass-card {
+        padding: 1.5rem !important;
+    }
+    #target-school {
+        font-size: 1.5rem;
+        letter-spacing: 0.1em;
+    }
 }
