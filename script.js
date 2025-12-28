@@ -1,185 +1,263 @@
 /**
- * Hygge Study - Main Script
- * GitHub Gist DB + Chart.js Visualization
+ * Hygge Study - Ultimate Logic
+ * GitHub Gist Database Full Integration
  */
 
-// --- 設定 ---
+// --- 状態管理 ---
 let GITHUB_TOKEN = localStorage.getItem('github_token') || "";
 let GIST_ID = localStorage.getItem('gist_id') || "";
 
-// --- DOM要素 ---
-const loginBtn = document.getElementById('login-btn');
-const taskList = document.getElementById('task-list');
-const studyTimeEl = document.getElementById('study-time');
-const progressFill = document.getElementById('progress-fill');
-const timerContainer = document.getElementById('timer-container');
-
-// --- 状態管理 ---
 let isTimerRunning = false;
-let sessionSeconds = 0; // 今回の勉強時間
-let totalSeconds = 0;   // 累計
+let totalSeconds = 0;   // 累計学習時間
 let timerInterval = null;
 let studyChart = null;
 
-// --- 1. 初期化 ---
-window.addEventListener('DOMContentLoaded', () => {
-    initChart();
-    if (GITHUB_TOKEN) {
-        handleLoginSuccess();
-        loadStudyData();
+// アプリケーションデータ（Gistと同期する内容）
+let appData = {
+    school: "My Target Goal",
+    date: "",
+    tasks: [],
+    total_seconds: 0
+};
+
+// --- DOM要素 ---
+const loginBtn = document.getElementById('login-btn');
+const studyTimeEl = document.getElementById('study-time');
+const progressFill = document.getElementById('progress-fill');
+const taskList = document.getElementById('task-list');
+const modal = document.getElementById('modal-overlay');
+const timerContainer = document.getElementById('timer-container');
+
+// --- 1. 初期化処理 ---
+window.addEventListener('DOMContentLoaded', async () => {
+    initChart(); // グラフの初期化
+    
+    if (GITHUB_TOKEN && GIST_ID) {
+        handleLoginUI(true);
+        await loadAllData();
+        renderTasks();
+        updateGoalDisplay();
     }
-    renderTasks(dummyTasks);
 });
 
-// --- 2. 認証 ---
-loginBtn.addEventListener('click', () => {
+// --- 2. 認証 & Gist データベース設定 ---
+loginBtn.addEventListener('click', async () => {
     if (GITHUB_TOKEN) {
-        if (confirm("ログアウトしますか？")) {
+        if(confirm("Logout?")) {
             localStorage.clear();
-            window.location.reload();
+            location.reload();
         }
     } else {
-        const token = prompt("GitHub Personal Access Tokenを入力してください");
+        const token = prompt("GitHub Personal Access Tokenを入力してください\n(gist権限が必要です)");
         if (token) {
             GITHUB_TOKEN = token;
             localStorage.setItem('github_token', token);
-            handleLoginSuccess();
-            setupDatabaseGist();
+            await setupGist();
+            location.reload();
         }
     }
 });
 
-function handleLoginSuccess() {
-    loginBtn.innerText = "CONNECTED";
-    loginBtn.classList.add('opacity-50');
+function handleLoginUI(isLoggedIn) {
+    if (isLoggedIn) {
+        loginBtn.innerText = "CONNECTED";
+        loginBtn.classList.add('opacity-40');
+    }
 }
 
-// --- 3. グラフ機能 (Chart.js) ---
-function initChart() {
-    const ctx = document.getElementById('studyChart').getContext('2d');
-    studyChart = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: ['Done', 'Remaining'],
-            datasets: [{
-                data: [0, 100],
-                backgroundColor: ['#a3be8c', '#e5e9f0'],
-                borderWidth: 0,
-                cutout: '85%'
-            }]
-        },
-        options: {
-            plugins: { legend: { display: false } },
-            animation: { duration: 2000 }
-        }
-    });
+async function setupGist() {
+    try {
+        const response = await fetch('https://api.github.com/gists', {
+            method: 'POST',
+            headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                description: "Hygge Study Data Storage",
+                public: false,
+                files: {
+                    "hygge_data.json": { 
+                        content: JSON.stringify({ school: "My Goal", date: "", tasks: [], total_seconds: 0 }) 
+                    }
+                }
+            })
+        });
+        const data = await response.json();
+        GIST_ID = data.id;
+        localStorage.setItem('gist_id', GIST_ID);
+        alert("GitHub上に専用データベースを作成しました！");
+    } catch (e) {
+        alert("Gistの作成に失敗しました。トークンの権限を確認してください。");
+    }
 }
 
-function updateChart(doneSeconds) {
-    const goalSeconds = 3600 * 5; // 仮の目標: 1日5時間
-    const done = Math.floor(doneSeconds);
-    const remaining = Math.max(0, goalSeconds - done);
-    
-    studyChart.data.datasets[0].data = [done, remaining];
-    studyChart.update();
-}
-
-// --- 4. Gist DB操作 ---
-async function setupDatabaseGist() {
-    if (GIST_ID) return;
-    const response = await fetch('https://api.github.com/gists', {
-        method: 'POST',
-        headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            description: "Hygge Study Data",
-            public: false,
-            files: { "study_logs.json": { content: JSON.stringify({ total_seconds: 0, history: [] }) } }
-        })
-    });
-    const data = await response.json();
-    GIST_ID = data.id;
-    localStorage.setItem('gist_id', GIST_ID);
-}
-
-async function loadStudyData() {
-    if (!GIST_ID || !GITHUB_TOKEN) return;
+// --- 3. データ同期ロジック ---
+async function loadAllData() {
     try {
         const res = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
             headers: { 'Authorization': `token ${GITHUB_TOKEN}` }
         });
         const data = await res.json();
-        const content = JSON.parse(data.files["study_logs.json"].content);
-        totalSeconds = content.total_seconds;
+        appData = JSON.parse(data.files["hygge_data.json"].content);
+        
+        totalSeconds = appData.total_seconds || 0;
         updateTimerDisplay(totalSeconds);
-        updateChart(totalSeconds);
-    } catch (e) { console.error(e); }
+        updateChart();
+    } catch (e) {
+        console.error("データの読み込み失敗:", e);
+    }
 }
 
-async function saveStudyData(seconds) {
+async function syncToGitHub() {
     if (!GIST_ID || !GITHUB_TOKEN) return;
-    const res = await fetch(`https://api.github.com/gists/${GIST_ID}`, {
-        headers: { 'Authorization': `token ${GITHUB_TOKEN}` }
-    });
-    const data = await res.json();
-    const content = JSON.parse(data.files["study_logs.json"].content);
-
-    content.total_seconds += seconds;
-    content.history.push({ date: new Date().toISOString(), duration: seconds });
-
-    await fetch(`https://api.github.com/gists/${GIST_ID}`, {
-        method: 'PATCH',
-        headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ files: { "study_logs.json": { content: JSON.stringify(content) } } })
-    });
-    updateChart(content.total_seconds);
+    
+    appData.total_seconds = totalSeconds;
+    
+    try {
+        await fetch(`https://api.github.com/gists/${GIST_ID}`, {
+            method: 'PATCH',
+            headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                files: {
+                    "hygge_data.json": { content: JSON.stringify(appData) }
+                }
+            })
+        });
+        console.log("GitHub Synced.");
+    } catch (e) {
+        console.error("同期失敗:", e);
+    }
 }
 
-// --- 5. タイマー機能 ---
+// --- 4. タイマー & グラフ制御 ---
 timerContainer.addEventListener('click', () => {
     if (!isTimerRunning) {
+        // 開始
         isTimerRunning = true;
-        sessionSeconds = 0;
         timerContainer.classList.add('animate-pulse-soft');
         timerInterval = setInterval(() => {
-            sessionSeconds++;
             totalSeconds++;
             updateTimerDisplay(totalSeconds);
         }, 1000);
     } else {
+        // 停止
         isTimerRunning = false;
         timerContainer.classList.remove('animate-pulse-soft');
         clearInterval(timerInterval);
-        saveStudyData(sessionSeconds);
+        updateChart();
+        syncToGitHub(); // 停止時に自動保存
     }
 });
+
+function initChart() {
+    const ctx = document.getElementById('studyChart').getContext('2d');
+    studyChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Done', 'Left'],
+            datasets: [{
+                data: [0, 100],
+                backgroundColor: ['#a3be8c', '#eceff4'],
+                borderWidth: 0,
+                cutout: '80%'
+            }]
+        },
+        options: {
+            plugins: { legend: { display: false } },
+            animation: { duration: 1500 }
+        }
+    });
+}
+
+function updateChart() {
+    const goalSeconds = 3600 * 5; // 目標: 5時間
+    studyChart.data.datasets[0].data = [totalSeconds, Math.max(0, goalSeconds - totalSeconds)];
+    studyChart.update();
+}
 
 function updateTimerDisplay(sec) {
     const hrs = Math.floor(sec / 3600).toString().padStart(2, '0');
     const mins = Math.floor((sec % 3600) / 60).toString().padStart(2, '0');
     const s = (sec % 60).toString().padStart(2, '0');
     studyTimeEl.innerText = `${hrs}:${mins}:${s}`;
-    progressFill.style.width = `${Math.min((sec / (3600 * 5)) * 100, 100)}%`;
+    
+    // プログレスバー（5時間で100%）
+    const progress = Math.min((sec / (3600 * 5)) * 100, 100);
+    progressFill.style.width = `${progress}%`;
 }
 
-// --- 6. タスク管理 ---
-const dummyTasks = [
-    { title: "数学：青チャート 演習10問", priority: "High", color: "#a3be8c" },
-    { title: "英語：ターゲット1900 セクション1", priority: "Mid", color: "#d08770" }
-];
+// --- 5. タスク管理機能 ---
+document.getElementById('add-task-btn').addEventListener('click', () => {
+    const title = prompt("新しい学習タスクを入力してください:");
+    if (title) {
+        const newTask = { id: Date.now(), title: title, done: false };
+        appData.tasks.push(newTask);
+        renderTasks();
+        syncToGitHub();
+    }
+});
 
-function renderTasks(tasks) {
+function renderTasks() {
     taskList.innerHTML = '';
-    tasks.forEach(task => {
-        const taskHtml = `
-            <div class="flex items-center p-5 bg-white/40 rounded-3xl border border-white/50 shadow-sm hover:bg-white/60 transition-all">
-                <div class="w-2 h-10 rounded-full mr-6" style="background-color: ${task.color}"></div>
-                <div class="flex-1">
-                    <p class="text-xs opacity-40 font-bold uppercase tracking-widest mb-1">${task.priority}</p>
-                    <p class="text-sm font-medium">${task.title}</p>
-                </div>
-                <button class="opacity-20 hover:opacity-100 transition-opacity">✕</button>
-            </div>
+    appData.tasks.forEach(task => {
+        const taskItem = document.createElement('div');
+        taskItem.className = "flex items-center p-5 bg-white/50 rounded-[1.5rem] border border-white shadow-sm transition-all hover:bg-white/80";
+        taskItem.innerHTML = `
+            <input type="checkbox" ${task.done ? 'checked' : ''} onchange="toggleTask(${task.id})" class="mr-4">
+            <span class="flex-1 text-sm font-medium ${task.done ? 'line-through opacity-30' : ''}">${task.title}</span>
+            <button onclick="deleteTask(${task.id})" class="text-xs opacity-20 hover:opacity-100 transition-opacity">✕</button>
         `;
-        taskList.insertAdjacentHTML('beforeend', taskHtml);
+        taskList.appendChild(taskItem);
     });
+}
+
+window.toggleTask = (id) => {
+    const task = appData.tasks.find(t => t.id === id);
+    if (task) {
+        task.done = !task.done;
+        renderTasks();
+        syncToGitHub();
+    }
+};
+
+window.deleteTask = (id) => {
+    appData.tasks = appData.tasks.filter(t => t.id !== id);
+    renderTasks();
+    syncToGitHub();
+};
+
+// --- 6. 設定（志望校・カウントダウン） ---
+document.getElementById('settings-btn').addEventListener('click', () => {
+    document.getElementById('input-school').value = appData.school || "";
+    document.getElementById('input-date').value = appData.date || "";
+    modal.classList.remove('hidden');
+});
+
+document.getElementById('close-modal').addEventListener('click', () => modal.classList.add('hidden'));
+
+document.getElementById('save-settings').addEventListener('click', () => {
+    appData.school = document.getElementById('input-school').value || "My Goal";
+    appData.date = document.getElementById('input-date').value || "";
+    
+    updateGoalDisplay();
+    syncToGitHub();
+    modal.classList.add('hidden');
+});
+
+function updateGoalDisplay() {
+    document.getElementById('target-school').innerText = appData.school;
+    
+    if (appData.date) {
+        const targetDate = new Date(appData.date);
+        const today = new Date();
+        const diffTime = targetDate - today;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        const countdownEl = document.getElementById('countdown-timer');
+        if (diffDays > 0) {
+            countdownEl.innerText = `${diffDays} Days until victory`;
+        } else if (diffDays === 0) {
+            countdownEl.innerText = "Today is the Day!";
+        } else {
+            countdownEl.innerText = "Goal reached";
+        }
+    }
 }
