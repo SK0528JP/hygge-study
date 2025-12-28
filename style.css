@@ -1,165 +1,180 @@
 /**
- * Hygge Study - Professional CSS
+ * Hygge Study - Ultimate Style
  * Theme: Nordic Modern (Hygge)
+ * Version: Debugged & Complete
  */
 
-/* --- カラー・変数定義 --- */
+/* --- 1. カラーパレットと変数の定義 --- */
 :root {
-    --nord-0: #fdfcfb;     /* 背景: 柔らかなスノーホワイト */
-    --nord-1: #eceff4;     /* サブ背景: 氷のようなグレー */
-    --nord-2: #4c566a;     /* メインテキスト: 落ち着いたチャコール */
-    --nord-frost: #88c0d0;  /* アクセント: スモーキーブルー */
-    --nord-leaf: #a3be8c;   /* 進捗: セージグリーン */
-    --nord-aurora: #d08770; /* 警告/削除: テラコッタ */
-    --shadow-soft: 0 10px 30px -5px rgba(0, 0, 0, 0.05);
+    /* 北欧カラー (Nord Theme based) */
+    --nord-bg: #fdfcfb;      /* 全体背景: スノーホワイト */
+    --nord-card: rgba(255, 255, 255, 0.75); /* カード背景 */
+    --nord-text: #4c566a;    /* メインテキスト: チャコール */
+    --nord-sub: #9ca3af;     /* サブテキスト: グレー */
+    
+    --nord-blue: #88c0d0;    /* アクセント: スモーキーブルー */
+    --nord-blue-dark: #5e81ac; /* ボタンホバー用 */
+    --nord-green: #a3be8c;   /* 完了・進捗: セージグリーン */
+    --nord-red: #bf616a;     /* 削除・警告: ソフトレッド */
+    
+    /* 影とガラス効果 */
+    --shadow-soft: 0 10px 40px -10px rgba(0, 0, 0, 0.05);
+    --glass-border: 1px solid rgba(255, 255, 255, 0.6);
 }
 
-/* --- ベーススタイル --- */
+/* --- 2. 基本設定 --- */
 body {
     font-family: 'Montserrat', 'Noto Sans JP', sans-serif;
-    background-color: var(--nord-0);
-    color: var(--nord-2);
+    background-color: var(--nord-bg);
+    color: var(--nord-text);
     line-height: 1.6;
-    letter-spacing: 0.02em;
+    -webkit-font-smoothing: antialiased; /* 文字を滑らかに */
 }
 
-/* --- ガラスモフィズム（カードデザイン） --- */
+/* --- 3. ガラスモフィズム（カードデザイン） --- */
 .glass-card {
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.6);
+    background: var(--nord-card);
+    backdrop-filter: blur(16px); /* すりガラスの強さ */
+    -webkit-backdrop-filter: blur(16px); /* Safari対応 */
+    border: var(--glass-border);
     box-shadow: var(--shadow-soft);
-    transition: all 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s ease;
 }
 
-.glass-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.08);
+/* カードのホバーエフェクト（PCのみ） */
+@media (min-width: 768px) {
+    .glass-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.08);
+    }
 }
 
-/* --- タイポグラフィ --- */
-.label-tiny {
-    font-size: 0.65rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.25em;
-    opacity: 0.4;
-    display: block;
-}
-
-/* --- ボタン --- */
+/* --- 4. ボタン --- */
+/* メインボタン（ログイン・設定保存） */
 .btn-primary {
-    background: linear-gradient(135deg, #88c0d0, #81a1c1);
+    background: linear-gradient(135deg, var(--nord-blue), #81a1c1);
     color: white;
-    padding: 0.8rem 1.8rem;
+    padding: 0.75rem 2rem;
     border-radius: 9999px;
     font-size: 0.75rem;
     font-weight: 700;
     letter-spacing: 0.15em;
-    box-shadow: 0 4px 15px rgba(129, 161, 193, 0.3);
-    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(136, 192, 208, 0.3);
+    transition: all 0.2s ease-in-out;
 }
 
-.btn-primary:hover {
-    transform: scale(1.05);
-    box-shadow: 0 6px 20px rgba(129, 161, 193, 0.4);
+.btn-primary:active {
+    transform: scale(0.98);
 }
 
+/* 追加ボタン（枠線のみ） */
 .btn-add {
-    color: var(--nord-frost);
-    font-size: 0.75rem;
+    color: var(--nord-blue);
+    font-size: 0.7rem;
     font-weight: 700;
-    border: 2px solid var(--nord-frost);
+    border: 2px solid var(--nord-blue);
     padding: 0.5rem 1.2rem;
     border-radius: 9999px;
     letter-spacing: 0.1em;
-    transition: 0.3s;
+    transition: all 0.2s ease;
 }
 
-.btn-add:hover {
-    background-color: var(--nord-frost);
-    color: white;
-}
-
-/* --- 入力フィールド --- */
+/* --- 5. 入力フィールド --- */
 .input-field {
-    width: 100%;
-    padding: 1.2rem;
-    border-radius: 1.2rem;
-    background: rgba(0, 0, 0, 0.03);
-    border: 1px solid rgba(0, 0, 0, 0.02);
-    font-size: 0.95rem;
-    transition: all 0.3s ease;
+    appearance: none;
+    -webkit-appearance: none;
     outline: none;
+    transition: all 0.3s ease;
 }
 
 .input-field:focus {
-    background: white;
-    border-color: var(--nord-frost);
-    box-shadow: 0 0 0 4px rgba(136, 192, 208, 0.1);
+    box-shadow: 0 0 0 3px rgba(136, 192, 208, 0.2);
+    border-color: var(--nord-blue);
 }
 
-/* --- プログレスバー --- */
-.progress-bar-container {
-    width: 100%;
-    background-color: #f0f2f5;
-    height: 8px;
-    border-radius: 9999px;
-    overflow: hidden;
-}
-
+/* --- 6. プログレスバー --- */
 .progress-bar-fill {
-    background: linear-gradient(90deg, #a3be8c, #8fbcbb);
-    height: 100%;
-    border-radius: 9999px;
-    transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+    background: linear-gradient(90deg, var(--nord-green), #8fbcbb);
+    box-shadow: 0 2px 10px rgba(163, 190, 140, 0.3);
 }
 
-/* --- タスクリスト項目 --- */
+/* --- 7. カスタムチェックボックス --- */
+/* タスクリスト内のチェックボックスを北欧風に */
 #task-list input[type="checkbox"] {
     appearance: none;
-    width: 20px;
-    height: 20px;
+    -webkit-appearance: none;
+    width: 22px;
+    height: 22px;
     border: 2px solid #d8dee9;
-    border-radius: 6px;
+    border-radius: 8px;
     cursor: pointer;
     position: relative;
-    transition: 0.2s;
+    transition: all 0.2s ease;
+    flex-shrink: 0; /* 潰れないようにする */
 }
 
+/* チェックされた状態 */
 #task-list input[type="checkbox"]:checked {
-    background-color: var(--nord-leaf);
-    border-color: var(--nord-leaf);
+    background-color: var(--nord-green);
+    border-color: var(--nord-green);
 }
 
+/* チェックマーク (CSSで描画) */
 #task-list input[type="checkbox"]:checked::after {
-    content: '✓';
+    content: '';
     position: absolute;
-    color: white;
-    font-size: 14px;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    left: 7px;
+    top: 3px;
+    width: 5px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
 }
 
-/* --- アニメーション --- */
+/* --- 8. タイポグラフィ --- */
+.label-tiny {
+    font-size: 0.65rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.25em;
+    color: var(--nord-sub);
+}
+
+/* --- 9. ユーティリティ & アニメーション --- */
+
+/* スクロールバー非表示 (機能は残す) */
+.scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}
+.scrollbar-hide::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
+}
+
+/* 削除ボタンのホバー */
+.btn-delete:hover {
+    color: var(--nord-red);
+    opacity: 1 !important;
+}
+
+/* 柔らかいパルスアニメーション（タイマー稼働時） */
 .animate-pulse-soft {
-    animation: pulse-soft 2.5s infinite ease-in-out;
+    animation: pulse-soft 3s infinite ease-in-out;
 }
 
 @keyframes pulse-soft {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.7; transform: scale(1.01); }
+    0% { box-shadow: 0 0 0 0 rgba(136, 192, 208, 0.4); }
+    70% { box-shadow: 0 0 0 20px rgba(136, 192, 208, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(136, 192, 208, 0); }
 }
 
-/* --- レスポンシブ調整 --- */
-@media (max-width: 768px) {
-    .glass-card {
-        padding: 1.5rem !important;
-    }
-    #target-school {
-        font-size: 1.5rem;
-        letter-spacing: 0.1em;
-    }
+/* モーダル表示アニメーション */
+#modal-overlay:not(.hidden) > div {
+    animation: modal-pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes modal-pop {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
 }
